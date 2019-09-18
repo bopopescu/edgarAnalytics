@@ -1,16 +1,49 @@
 from lxml import html
+from lxml import etree
 import requests
 import edgarDb
 
 class formD():
 
-    def __init__(self, url):
+    def __init__(self, url=""):
         self.url = url
+        self.page = None
 
+    def getUrlFromMaster(self, theFormDMasterRecord):
+        self.url = "https://www.sec.gov/Archives/" + theFormDMasterRecord['FileName']
 
     def getFormD(self):
-        page = requests.get(self.url)
-        return page
+        print("Getting the page...")
+        return requests.get(self.url)
+
+    def setFormDBasicInfo(self, thePage):
+        tree = etree.fromstring(thePage.content)
+        basicInfoElement = tree.find("primaryIssuer")
+
+        yearOfIncorporationOverFive = basicInfoElement.find("yearOfInc").find("overFiveYears")
+        yearOfIncorporationWithinFive = basicInfoElement.find("yearOfInc").find("withinFiveYears")
+        yearOfIncorporationYetFormed = basicInfoElement.find("yearOfInc").find("yetFormed")
+        yearOfIncorporationValue = basicInfoElement.find("yearOfInc").find("value")
+
+        formDBasicInfo = dict(issuerName_=basicInfoElement.find("entityName").text,
+                              jurisdiction_=basicInfoElement.find("jurisdictionOfInc").text,
+                              yearOfIncorporationOverFive_="" if yearOfIncorporationOverFive is None
+                              else yearOfIncorporationOverFive.text,
+                              yearOfIncorporationWithinFive="" if yearOfIncorporationWithinFive is None
+                              else yearOfIncorporationWithinFive.text,
+                              yearOfIncorporationYetFormed="" if yearOfIncorporationYetFormed is None
+                              else yearOfIncorporationYetFormed.text,
+                              yearOfIncorporationValue="" if yearOfIncorporationValue is None
+                              else yearOfIncorporationValue.text,
+                              ppbStreetAddress1=basicInfoElement.find("issuerAddress").find("street1").text,
+                              ppbStreetAddress2=basicInfoElement.find("issuerAddress").find("street2").text,
+                              ppbCity=basicInfoElement.find("issuerAddress").find("city").text,
+                              ppbStateOrCountry=basicInfoElement.find("issuerAddress").find("stateOrCountry").text,
+                              ppbStateOrCountryDesc=basicInfoElement.find("issuerAddress").find("stateOrCountryDescription").text,
+                              ppbZip=basicInfoElement.find("issuerAddress").find("zipCode").text,
+                              ppbPhone=basicInfoElement.find("issuerPhoneNumber").text
+                              )
+        return formDBasicInfo
 
     def insertFormDRecord(self, theFormDMasterRecord):
 
