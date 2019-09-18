@@ -45,6 +45,28 @@ class formD():
                               )
         return formDBasicInfo
 
+    def setFormDRelatedPersons(self, thePage):
+        tree = etree.fromstring(thePage.content)
+        relatedPersonsElement = tree.find("relatedPersonsList")
+
+        relatedPersons = list()
+        for person in relatedPersonsElement.findall("relatedPersonInfo"):
+
+            relatedPersonDict = dict(firstName_=person.find("relatedPersonName").find("firstName").text,
+                                     lastName_=person.find("relatedPersonName").find("lastName").text,
+                                     addressStreet_=person.find("relatedPersonAddress").find("street1").text,
+                                     addressCity_=person.find("relatedPersonAddress").find("city").text,
+                                     addressStateOrCountry_=person.find("relatedPersonAddress").find("stateOrCountry").text,
+                                     addressStateOrCountryDescription_=person.find("relatedPersonAddress")
+                                     .find("stateOrCountryDescription").text,
+                                     addressZip_=person.find("relatedPersonAddress").find("zipCode").text,
+                                     relatedPersonRelationship_=person.find("relatedPersonRelationshipList")
+                                     .find("relationship").text
+                                     )
+            relatedPersons.append(relatedPersonDict)
+        return relatedPersons
+
+
     def insertFormDRecord(self, theFormDMasterRecord):
 
         myDbConnector = edgarDb.getEdgarDbConnector()
