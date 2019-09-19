@@ -1,5 +1,6 @@
 from lxml import html
 from lxml import etree
+import xmlUtil
 import requests
 import edgarDb
 
@@ -25,23 +26,28 @@ class formD():
         yearOfIncorporationYetFormed = basicInfoElement.find("yearOfInc").find("yetFormed")
         yearOfIncorporationValue = basicInfoElement.find("yearOfInc").find("value")
 
-        formDBasicInfo = dict(issuerName_=basicInfoElement.find("entityName").text,
-                              jurisdiction_=basicInfoElement.find("jurisdictionOfInc").text,
-                              yearOfIncorporationOverFive_="" if yearOfIncorporationOverFive is None
+        formDBasicInfo = dict(cik_=basicInfoElement.find("cik").text,
+                              entityName_=basicInfoElement.find("entityName").text,
+                              jurisdictionOfInc_=basicInfoElement.find("jurisdictionOfInc").text,
+                              issuerPreviousNameListValue_=basicInfoElement.find("issuerPreviousNameList").
+                              find("value"),
+                              previousName_=basicInfoElement.find("edgarPreviousNameList").find("previousName"),
+                              overFiveYears_="" if yearOfIncorporationOverFive is None
                               else yearOfIncorporationOverFive.text,
-                              yearOfIncorporationWithinFive="" if yearOfIncorporationWithinFive is None
+                              withinFiveYears_="" if yearOfIncorporationWithinFive is None
                               else yearOfIncorporationWithinFive.text,
-                              yearOfIncorporationYetFormed="" if yearOfIncorporationYetFormed is None
+                              yetFormed_="" if yearOfIncorporationYetFormed is None
                               else yearOfIncorporationYetFormed.text,
-                              yearOfIncorporationValue="" if yearOfIncorporationValue is None
+                              entityType_=basicInfoElement.find("entityType").text,
+                              yearOfIncValue_="" if yearOfIncorporationValue is None
                               else yearOfIncorporationValue.text,
-                              ppbStreetAddress1=basicInfoElement.find("issuerAddress").find("street1").text,
-                              ppbStreetAddress2=basicInfoElement.find("issuerAddress").find("street2").text,
-                              ppbCity=basicInfoElement.find("issuerAddress").find("city").text,
-                              ppbStateOrCountry=basicInfoElement.find("issuerAddress").find("stateOrCountry").text,
-                              ppbStateOrCountryDesc=basicInfoElement.find("issuerAddress").find("stateOrCountryDescription").text,
-                              ppbZip=basicInfoElement.find("issuerAddress").find("zipCode").text,
-                              ppbPhone=basicInfoElement.find("issuerPhoneNumber").text
+                              street1_=basicInfoElement.find("issuerAddress").find("street1").text,
+                              street2_=basicInfoElement.find("issuerAddress").find("street2").text,
+                              city_=basicInfoElement.find("issuerAddress").find("city").text,
+                              stateOrCountry_=basicInfoElement.find("issuerAddress").find("stateOrCountry").text,
+                              stateOrCountryDescription_=basicInfoElement.find("issuerAddress").find("stateOrCountryDescription").text,
+                              zipCode_=basicInfoElement.find("issuerAddress").find("zipCode").text,
+                              issuerPhoneNumber_=basicInfoElement.find("issuerPhoneNumber").text
                               )
         return formDBasicInfo
 
@@ -54,17 +60,98 @@ class formD():
 
             relatedPersonDict = dict(firstName_=person.find("relatedPersonName").find("firstName").text,
                                      lastName_=person.find("relatedPersonName").find("lastName").text,
-                                     addressStreet_=person.find("relatedPersonAddress").find("street1").text,
-                                     addressCity_=person.find("relatedPersonAddress").find("city").text,
-                                     addressStateOrCountry_=person.find("relatedPersonAddress").find("stateOrCountry").text,
-                                     addressStateOrCountryDescription_=person.find("relatedPersonAddress")
+                                     street1_=person.find("relatedPersonAddress").find("street1").text,
+                                     city_=person.find("relatedPersonAddress").find("city").text,
+                                     stateOrCountry_=person.find("relatedPersonAddress").find("stateOrCountry").text,
+                                     stateOrCountryDescription_=person.find("relatedPersonAddress")
                                      .find("stateOrCountryDescription").text,
-                                     addressZip_=person.find("relatedPersonAddress").find("zipCode").text,
-                                     relatedPersonRelationship_=person.find("relatedPersonRelationshipList")
+                                     zipCode_=person.find("relatedPersonAddress").find("zipCode").text,
+                                     relationship_=person.find("relatedPersonRelationshipList")
                                      .find("relationship").text
                                      )
             relatedPersons.append(relatedPersonDict)
         return relatedPersons
+
+    def setSalesCompensationList(self, theSalesCompensationListElement):
+        compensationRecipients = list()
+        for recipient in theSalesCompensationListElement.findall("recipient"):
+            salesCompRecipientData = dict(
+                recipientName_=recipient.find("recipientName").text,
+                recipientCrdNumber_=recipient.find("recipientCRDNumber").text,
+                associatedBDName_=recipient.find("associatedBDName").text,
+                associatedBDCRDNumber_=recipient.find("associatedBDCRDNumber").text,
+                recipientAddressStreet1=recipient.find("recipientAddress").find("street1").text,
+                recipientAddressStreet2=recipient.find("recipientAddress").find("street2").text,
+                recipientAddressCity=recipient.find("recipientAddress").find("city").text,
+                recipientAddressStateOrCountry=recipient.find("recipientAddress").find("stateOrCountry").text,
+                recipientAddressStateOrCountryDescription=recipient.find("recipientAddress").
+                    find("stateOrCountryDescription").text,
+                recipientAddressZip=recipient.find("recipientAddress").find("zipCode").text,
+
+            )
+            compensationRecipients.append(salesCompRecipientData)
+        print compensationRecipients
+        return compensationRecipients
+
+    def setFormDOfferingData(self, thePage):
+        tree = etree.fromstring(thePage.content)
+        offeringDataElement = tree.find("offeringData")
+
+        compensationRecipients = offeringDataElement.find("salesCompensationList")
+        mySalesCompRecipients = self.setSalesCompensationList(compensationRecipients)
+
+        formDOfferingInfo = dict(industryGroupType_=offeringDataElement.find("industryGroup").
+                                 find("industryGroupType").text,
+                                 revenueRange_=offeringDataElement.find("issuerSize").find("revenueRange").text,
+                                 federalExemptionExclusion_=offeringDataElement.find("federalExemptionsExclusions").
+                                 find("item").text,
+                                 isAmendment=offeringDataElement.find("typeOfFiling").
+                                 find("newOrAmendment").find("isAmendment").text,
+                                 dateOfFirstSale=offeringDataElement.find("typeOfFiling").
+                                 find("dateOfFirstSale").find("value").text,
+                                 durationMoreThanOneYear=offeringDataElement.find("durationOfOffering").
+                                 find("moreThanOneYear").text,
+                                 typesOfSecuritiesOffered=offeringDataElement.find("typesOfSecuritiesOffered").
+                                 find("isEquityType").text,
+                                 businessCombinationTransaction=offeringDataElement.
+                                 find("businessCombinationTransaction").
+                                 find("isBusinessCombinationTransaction").text,
+                                 minimumInvestmentAccepted=offeringDataElement.find("minimumInvestmentAccepted").text,
+                                 salesCompRecipients=mySalesCompRecipients
+                                 )
+        return formDOfferingInfo
+
+    def checkFormDFullComparison(self, thePage):
+
+        #First check for missing basic info
+        tree = etree.fromstring(thePage.content)
+        basicInfoElement = tree.find("primaryIssuer")
+        elementTags = xmlUtil.getDeepestTagList(basicInfoElement)
+
+        theBasicInfo = self.setFormDBasicInfo(thePage)
+
+        missingTags = False
+        for item in elementTags:
+            if item not in theBasicInfo.keys():
+                print "Missing Item: " + item
+                missingTags = True
+        if not missingTags:
+            print("No missing basic info tags!!!")
+
+        #Next check for missing related persons
+        missingTags = False
+        relatedPersonsElement = tree.find("relatedPersonsList")
+        uniqueElementTags = list(set(xmlUtil.getDeepestTagList(relatedPersonsElement)))
+        theRelatedPersonsInfo = self.setFormDRelatedPersons(thePage)
+        for person in theRelatedPersonsInfo:
+            for item in uniqueElementTags:
+                if item not in person.keys():
+                    print "Missing Item: " + item
+                    missingTags = True
+        if not missingTags:
+            print("No missing related persons info")
+
+        return theRelatedPersonsInfo
 
 
     def insertFormDRecord(self, theFormDMasterRecord):
