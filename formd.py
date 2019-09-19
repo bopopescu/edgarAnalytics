@@ -103,30 +103,62 @@ class formD():
         formDOfferingInfo = dict(industryGroupType_=offeringDataElement.find("industryGroup").
                                  find("industryGroupType").text,
                                  revenueRange_=offeringDataElement.find("issuerSize").find("revenueRange").text,
-                                 federalExemptionExclusion_=offeringDataElement.find("federalExemptionsExclusions").
-                                 find("item").text,
-                                 isAmendment=offeringDataElement.find("typeOfFiling").
+                                 federalExemptionsExclusionsItem_=offeringDataElement.
+                                 find("federalExemptionsExclusions").find("item").text,
+                                 isAmendment_=offeringDataElement.find("typeOfFiling").
                                  find("newOrAmendment").find("isAmendment").text,
-                                 dateOfFirstSale=offeringDataElement.find("typeOfFiling").
+                                 dateOfFirstSaleValue_=offeringDataElement.find("typeOfFiling").
                                  find("dateOfFirstSale").find("value").text,
-                                 durationMoreThanOneYear=offeringDataElement.find("durationOfOffering").
+                                 moreThanOneYear_=offeringDataElement.find("durationOfOffering").
                                  find("moreThanOneYear").text,
-                                 typesOfSecuritiesOffered=offeringDataElement.find("typesOfSecuritiesOffered").
+                                 isEquityType_=offeringDataElement.find("typesOfSecuritiesOffered").
                                  find("isEquityType").text,
-                                 businessCombinationTransaction=offeringDataElement.
+                                 isBusinessCombinationTransaction_=offeringDataElement.
                                  find("businessCombinationTransaction").
                                  find("isBusinessCombinationTransaction").text,
-                                 minimumInvestmentAccepted=offeringDataElement.find("minimumInvestmentAccepted").text,
-                                 salesCompRecipients=mySalesCompRecipients
+                                 minimumInvestmentAccepted_=offeringDataElement.find("minimumInvestmentAccepted").text,
+                                 salesCompRecipients=mySalesCompRecipients,
+                                 totalOfferingAmount_=offeringDataElement.find("offeringSalesAmounts").
+                                 find("totalOfferingAmount").text,
+                                 totalAmountSold_=offeringDataElement.find("offeringSalesAmounts").
+                                 find("totalAmountSold").text,
+                                 totalRemaining_=offeringDataElement.find("offeringSalesAmounts").
+                                 find("totalRemaining").text,
+                                 hasNonAccreditedInvestors_=offeringDataElement.find("investors").
+                                 find("hasNonAccreditedInvestors").text,
+                                 totalNumberAlreadyInvested_=offeringDataElement.find("investors").
+                                 find("totalNumberAlreadyInvested").text,
+                                 salesCommissionsDollaramount_=offeringDataElement.find("salesCommissionsFindersFees").
+                                 find("salesCommissions").find("dollarAmount").text,
+                                 isEstimate_=offeringDataElement.find("salesCommissionsFindersFees").
+                                 find("salesCommissions").find("isEstimate").text,
+                                 findersFeesDollaramount_=offeringDataElement.find("salesCommissionsFindersFees").
+                                 find("findersFees").find("dollarAmount").text,
+                                 grossProceedsUsedDollaramount_=offeringDataElement.find("useOfProceeds").
+                                 find("grossProceedsUsed").find("dollarAmount").text,
+                                 authorizedRepresentative_=offeringDataElement.find("signatureBlock").
+                                 find("authorizedRepresentative").text,
+                                 issuerName_=offeringDataElement.find("signatureBlock").
+                                 find("signature").find("issuerName").text,
+                                 signatureName_=offeringDataElement.find("signatureBlock").
+                                 find("signature").find("signatureName").text,
+                                 nameOfSigner_=offeringDataElement.find("signatureBlock").
+                                 find("signature").find("nameOfSigner").text,
+                                 signatureTitle_=offeringDataElement.find("signatureBlock").
+                                 find("signature").find("signatureTitle").text,
+                                 signatureDate_=offeringDataElement.find("signatureBlock").
+                                 find("signature").find("signatureDate").text,
                                  )
         return formDOfferingInfo
 
     def checkFormDFullComparison(self, thePage):
+        combinedTagList = ["item", "value", "dollarAmount"]
+        ignoreTagList = ["clarificationOfResponse"]
 
         #First check for missing basic info
         tree = etree.fromstring(thePage.content)
         basicInfoElement = tree.find("primaryIssuer")
-        elementTags = xmlUtil.getDeepestTagList(basicInfoElement)
+        elementTags = xmlUtil.getDeepestTagList(basicInfoElement, combinedTagList, ignoreTagList)
 
         theBasicInfo = self.setFormDBasicInfo(thePage)
 
@@ -141,7 +173,7 @@ class formD():
         #Next check for missing related persons
         missingTags = False
         relatedPersonsElement = tree.find("relatedPersonsList")
-        uniqueElementTags = list(set(xmlUtil.getDeepestTagList(relatedPersonsElement)))
+        uniqueElementTags = list(set(xmlUtil.getDeepestTagList(relatedPersonsElement, combinedTagList, ignoreTagList)))
         theRelatedPersonsInfo = self.setFormDRelatedPersons(thePage)
         for person in theRelatedPersonsInfo:
             for item in uniqueElementTags:
@@ -151,7 +183,21 @@ class formD():
         if not missingTags:
             print("No missing related persons info")
 
-        return theRelatedPersonsInfo
+        missingTags = False
+        offeringDataElement = tree.find("offeringData")
+        theTagList = list()
+        uniqueElementTags = xmlUtil.getDeepestTagListManually(offeringDataElement, theTagList,
+                                                              combinedTagList, ignoreTagList,
+                                                              ["salesCompensationList"])
+        theOfferingDataInfo = self.setFormDOfferingData(thePage)
+        for item in uniqueElementTags:
+            if item not in theOfferingDataInfo.keys():
+                print("Missing item: " + item)
+                missingTags = True
+        if not missingTags:
+            print("No missing offering data info!!")
+
+        return theOfferingDataInfo
 
 
     def insertFormDRecord(self, theFormDMasterRecord):
