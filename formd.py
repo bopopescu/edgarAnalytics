@@ -77,20 +77,21 @@ class formD():
         for recipient in theSalesCompensationListElement.findall("recipient"):
             salesCompRecipientData = dict(
                 recipientName_=recipient.find("recipientName").text,
-                recipientCrdNumber_=recipient.find("recipientCRDNumber").text,
+                recipientCRDNumber_=recipient.find("recipientCRDNumber").text,
                 associatedBDName_=recipient.find("associatedBDName").text,
                 associatedBDCRDNumber_=recipient.find("associatedBDCRDNumber").text,
-                recipientAddressStreet1=recipient.find("recipientAddress").find("street1").text,
-                recipientAddressStreet2=recipient.find("recipientAddress").find("street2").text,
-                recipientAddressCity=recipient.find("recipientAddress").find("city").text,
-                recipientAddressStateOrCountry=recipient.find("recipientAddress").find("stateOrCountry").text,
-                recipientAddressStateOrCountryDescription=recipient.find("recipientAddress").
+                street1_=recipient.find("recipientAddress").find("street1").text,
+                street2_=recipient.find("recipientAddress").find("street2").text,
+                city_=recipient.find("recipientAddress").find("city").text,
+                stateOrCountry_=recipient.find("recipientAddress").find("stateOrCountry").text,
+                stateOrCountryDescription_=recipient.find("recipientAddress").
                     find("stateOrCountryDescription").text,
-                recipientAddressZip=recipient.find("recipientAddress").find("zipCode").text,
-
+                zipCode_=recipient.find("recipientAddress").find("zipCode").text,
+                statesOfSolicitationListValue_=recipient.find("statesOfSolicitationList").
+                    find("value").text,
+                foreignSolicitation_=recipient.find("foreignSolicitation").text,
             )
             compensationRecipients.append(salesCompRecipientData)
-        print compensationRecipients
         return compensationRecipients
 
     def setFormDOfferingData(self, thePage):
@@ -99,7 +100,6 @@ class formD():
 
         compensationRecipients = offeringDataElement.find("salesCompensationList")
         mySalesCompRecipients = self.setSalesCompensationList(compensationRecipients)
-
         formDOfferingInfo = dict(industryGroupType_=offeringDataElement.find("industryGroup").
                                  find("industryGroupType").text,
                                  revenueRange_=offeringDataElement.find("issuerSize").find("revenueRange").text,
@@ -183,6 +183,7 @@ class formD():
         if not missingTags:
             print("No missing related persons info")
 
+        #Next check the offering data
         missingTags = False
         offeringDataElement = tree.find("offeringData")
         theTagList = list()
@@ -197,7 +198,19 @@ class formD():
         if not missingTags:
             print("No missing offering data info!!")
 
-        return theOfferingDataInfo
+        #Lastly check if missing sales comp info
+        missingTags = False
+        theSalesCompInfo = theOfferingDataInfo['salesCompRecipients']
+        theSalesCompElement = offeringDataElement.find("salesCompensationList")
+        uniqueElementTags = list(set(xmlUtil.getDeepestTagList(theSalesCompElement, combinedTagList, ignoreTagList)))
+        for recipient in theSalesCompInfo:
+            for item in uniqueElementTags:
+                if item not in recipient.keys():
+                    print "Missing Item: " + item
+                    missingTags = True
+        if not missingTags:
+            print("No missing sales comp info!!")
+        return theSalesCompInfo
 
 
     def insertFormDRecord(self, theFormDMasterRecord):
