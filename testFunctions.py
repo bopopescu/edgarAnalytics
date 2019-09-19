@@ -41,12 +41,14 @@ def testGetFormDPageOfferingInfo():
     assert thePage.status_code == 200, "Should be 200"
     return formD.setFormDOfferingData(thePage)
 
-def testCheckFullComparison():
-    dailyIndex = formd.dailyIndex("QTR2", "20190401")
-    filteredUrls = dailyIndex.getCikFilteredUrls(['1771428'])[0]
+def testCheckFullComparison(theQuarter, theDate, theCik):
+    #Sample test, theQuarter = "QTR2", theDate = "20190401", theCik = '1771428'
+    dailyIndex = formd.dailyIndex(theQuarter, theDate)
+    filteredUrls = dailyIndex.getCikFilteredUrls([theCik])[0]
     formD = formd.formD()
     formD.getUrlFromMaster(filteredUrls)
     print("URL: " + formD.url)
     thePage = formD.getFormD()
     assert thePage.status_code == 200, "Should be 200"
     return formD.checkFormDFullComparison(thePage)
+

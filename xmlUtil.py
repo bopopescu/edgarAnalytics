@@ -24,3 +24,7 @@ def getDeepestTagListManually(theElement, theTagList, combinedTags, ignoreTagLis
                 else:
                     theTagList.append(theElement.tag + '_')
     return theTagList
+
+
+def handleMissingEntry(theEntryPath):
+    return "" if theEntryPath is None else theEntryPath.text

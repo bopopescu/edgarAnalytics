@@ -3,6 +3,8 @@ from lxml import etree
 import xmlUtil
 import requests
 import edgarDb
+from xmlUtil import *
+
 
 class formD():
 
@@ -30,6 +32,8 @@ class formD():
                               entityName_=basicInfoElement.find("entityName").text,
                               jurisdictionOfInc_=basicInfoElement.find("jurisdictionOfInc").text,
                               issuerPreviousNameListValue_=basicInfoElement.find("issuerPreviousNameList").
+                              find("value"),
+                              edgarPreviousNameListValue_=basicInfoElement.find("edgarPreviousNameList").
                               find("value"),
                               previousName_=basicInfoElement.find("edgarPreviousNameList").find("previousName"),
                               overFiveYears_="" if yearOfIncorporationOverFive is None
@@ -67,7 +71,8 @@ class formD():
                                      .find("stateOrCountryDescription").text,
                                      zipCode_=person.find("relatedPersonAddress").find("zipCode").text,
                                      relationship_=person.find("relatedPersonRelationshipList")
-                                     .find("relationship").text
+                                     .find("relationship").text,
+                                     relationshipClarification_=person.find("relationshipClarification").text
                                      )
             relatedPersons.append(relatedPersonDict)
         return relatedPersons
@@ -102,6 +107,9 @@ class formD():
         mySalesCompRecipients = self.setSalesCompensationList(compensationRecipients)
         formDOfferingInfo = dict(industryGroupType_=offeringDataElement.find("industryGroup").
                                  find("industryGroupType").text,
+                                 investmentFundType_=handleMissingEntry(offeringDataElement.find("industryGroup").
+                                                                        find("investmentFundType")),
+                                 is40Act_=handleMissingEntry(offeringDataElement.find("industryGroup").find("is40Act")),
                                  revenueRange_=offeringDataElement.find("issuerSize").find("revenueRange").text,
                                  federalExemptionsExclusionsItem_=offeringDataElement.
                                  find("federalExemptionsExclusions").find("item").text,
@@ -113,6 +121,9 @@ class formD():
                                  find("moreThanOneYear").text,
                                  isEquityType_=offeringDataElement.find("typesOfSecuritiesOffered").
                                  find("isEquityType").text,
+                                 isPooledInvestmentFundType_=handleMissingEntry(offeringDataElement.
+                                                                                find("typesOfSecuritiesOffered").
+                                                                                find("isPooledInvestmentFundType")),
                                  isBusinessCombinationTransaction_=offeringDataElement.
                                  find("businessCombinationTransaction").
                                  find("isBusinessCombinationTransaction").text,
@@ -130,8 +141,10 @@ class formD():
                                  find("totalNumberAlreadyInvested").text,
                                  salesCommissionsDollaramount_=offeringDataElement.find("salesCommissionsFindersFees").
                                  find("salesCommissions").find("dollarAmount").text,
-                                 isEstimate_=offeringDataElement.find("salesCommissionsFindersFees").
-                                 find("salesCommissions").find("isEstimate").text,
+                                 isEstimate_=handleMissingEntry(
+                                     offeringDataElement.find("salesCommissionsFindersFees").
+                                         find("salesCommissions").find("isEstimate")
+                                 ),
                                  findersFeesDollaramount_=offeringDataElement.find("salesCommissionsFindersFees").
                                  find("findersFees").find("dollarAmount").text,
                                  grossProceedsUsedDollaramount_=offeringDataElement.find("useOfProceeds").
@@ -165,7 +178,7 @@ class formD():
         missingTags = False
         for item in elementTags:
             if item not in theBasicInfo.keys():
-                print "Missing Item: " + item
+                print "Missing Basic Info Item: " + item
                 missingTags = True
         if not missingTags:
             print("No missing basic info tags!!!")
@@ -178,7 +191,7 @@ class formD():
         for person in theRelatedPersonsInfo:
             for item in uniqueElementTags:
                 if item not in person.keys():
-                    print "Missing Item: " + item
+                    print "Missing Related Persons Item: " + item
                     missingTags = True
         if not missingTags:
             print("No missing related persons info")
@@ -193,7 +206,7 @@ class formD():
         theOfferingDataInfo = self.setFormDOfferingData(thePage)
         for item in uniqueElementTags:
             if item not in theOfferingDataInfo.keys():
-                print("Missing item: " + item)
+                print("Missing Offering Data item: " + item)
                 missingTags = True
         if not missingTags:
             print("No missing offering data info!!")
@@ -206,7 +219,7 @@ class formD():
         for recipient in theSalesCompInfo:
             for item in uniqueElementTags:
                 if item not in recipient.keys():
-                    print "Missing Item: " + item
+                    print "Missing Sales Recipient Item: " + item
                     missingTags = True
         if not missingTags:
             print("No missing sales comp info!!")
