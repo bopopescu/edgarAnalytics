@@ -12,8 +12,8 @@ class formD():
         self.url = url
         self.page = None
 
-    def getUrlFromMaster(self, theFormDMasterRecord):
-        self.url = "https://www.sec.gov/Archives/" + theFormDMasterRecord['FileName']
+    def getUrlFromMain(self, theFormDMainRecord):
+        self.url = "https://www.sec.gov/Archives/" + theFormDMainRecord['FileName']
 
     def getFormD(self):
         print("Getting the page...")
@@ -226,10 +226,10 @@ class formD():
         return theSalesCompInfo
 
 
-    def insertFormDRecord(self, theFormDMasterRecord):
+    def insertFormDRecord(self, theFormDMainRecord):
 
         myDbConnector = edgarDb.getEdgarDbConnector()
-        edgarDb.insertFilingMasterInfo(myDbConnector, theFormDMasterRecord)
+        edgarDb.insertFilingMainInfo(myDbConnector, theFormDMainRecord)
 
 
 class dailyIndex():
@@ -241,7 +241,7 @@ class dailyIndex():
         self.getFormUrls()
 
     def getDailyIndexFile(self):
-        indexFileUrl = "https://www.sec.gov/Archives/edgar/daily-index/2019/" + self.indexQuarter + "/master." + self.indexDate + ".idx"
+        indexFileUrl = "https://www.sec.gov/Archives/edgar/daily-index/2019/" + self.indexQuarter + "/main." + self.indexDate + ".idx"
         page = requests.get(indexFileUrl)
         self.indexFile = page
 
